@@ -1,10 +1,10 @@
 {
-  "name": "plugin-template",
+  "name": "plugin-oci",
   "build": {
     "context": ".",
     "dockerfile": "Dockerfile"
   },
-  "workspaceFolder": "/workspaces/plugin-template",
+  "workspaceFolder": "/workspaces/plugin-oci",
   "forwardPorts": [8080],
   "customizations": {
     "vscode": {
