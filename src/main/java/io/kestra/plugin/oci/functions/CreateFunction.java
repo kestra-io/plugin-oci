@@ -72,7 +72,7 @@ public class CreateFunction extends AbstractFunctionsTask implements RunnableTas
     @Schema(title = "Image digest", description = "The digest of the image to pull when the function is invoked. Defaults to the digest currently associated with the image tag.")
     private Property<String> imageDigest;
 
-    @Schema(title = "Memory in MB", description = "Memory allocated to the function. OCI accepts 128, 256, 512, 1024, 2048, 3072 or 4096; when unset, OCI uses its default.")
+    @Schema(title = "Memory in MB", description = "Memory allocated to the function, within the values OCI Functions accepts (see the OCI documentation). When unset, OCI uses its default.")
     private Property<Long> memoryInMBs;
 
     @Schema(title = "Timeout in seconds", description = "Maximum run time of one call, from 5 to 300. When unset, OCI uses its default.")

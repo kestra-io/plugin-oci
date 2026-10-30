@@ -167,6 +167,10 @@ jar {
 
 shadowJar {
     archiveClassifier.set(null)
+    // several dependencies (Jersey, Jackson) ship the same service file: keep them all so that mergeServiceFiles() can merge them
+    filesMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
     mergeServiceFiles()
 }
 
