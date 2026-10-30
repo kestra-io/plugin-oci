@@ -1,8 +1,6 @@
 package io.kestra.plugin.oci.functions;
 
-import com.oracle.bmc.auth.BasicAuthenticationDetailsProvider;
 import com.oracle.bmc.functions.FunctionsManagement;
-import com.oracle.bmc.functions.FunctionsManagementClient;
 import com.oracle.bmc.functions.model.Function;
 import com.oracle.bmc.functions.requests.GetFunctionRequest;
 import io.kestra.core.models.annotations.Example;
@@ -10,7 +8,6 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
-import io.kestra.plugin.oci.AbstractOciTask;
 import io.kestra.plugin.oci.OciAuth;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -69,7 +66,7 @@ import java.util.Map;
         )
     }
 )
-public class GetFunction extends AbstractOciTask implements RunnableTask<GetFunction.Output> {
+public class GetFunction extends AbstractFunctionsTask implements RunnableTask<GetFunction.Output> {
     @Schema(title = "OCID of the function", description = "For example `ocid1.fnfunc.oc1.eu-frankfurt-1.aaaa...`.")
     @NotNull
     private Property<String> functionId;
@@ -100,11 +97,6 @@ public class GetFunction extends AbstractOciTask implements RunnableTask<GetFunc
                 .freeformTags(function.getFreeformTags())
                 .build();
         }
-    }
-
-    // a seam for tests: they return a client that does not call OCI
-    protected FunctionsManagement client(BasicAuthenticationDetailsProvider provider) {
-        return FunctionsManagementClient.builder().build(provider);
     }
 
     @Builder
