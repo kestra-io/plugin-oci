@@ -1,7 +1,10 @@
 @PluginSubGroup(
     title = "Oracle Cloud Infrastructure",
     description = "Oracle Cloud Infrastructure plugin for Kestra",
-    categories = PluginSubGroup.PluginCategory.DATA
+    categories = {
+        PluginSubGroup.PluginCategory.CLOUD,
+        PluginSubGroup.PluginCategory.INFRASTRUCTURE
+    }
 )
 package io.kestra.plugin.oci;
 

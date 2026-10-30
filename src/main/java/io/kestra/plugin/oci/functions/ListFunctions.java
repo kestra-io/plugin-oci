@@ -101,7 +101,7 @@ public class ListFunctions extends AbstractFunctionsTask implements RunnableTask
 
         return Output.builder()
             .functions(functions)
-            .size(functions.size())
+            .count(functions.size())
             .build();
     }
 
@@ -120,7 +120,7 @@ public class ListFunctions extends AbstractFunctionsTask implements RunnableTask
         private final List<Item> functions;
 
         @Schema(title = "Number of functions returned")
-        private final Integer size;
+        private final Integer count;
     }
 
     @Builder

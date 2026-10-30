@@ -39,14 +39,81 @@
 
 ## Why
 
-- What user problem does this solve? Teams need a concrete starting point for building and validating new Kestra plugins without recreating the same project scaffolding from scratch.
-- Why would a team adopt this plugin in a workflow? It gives plugin authors a ready-made reference repo they can adapt alongside their own build, test, and publishing workflow.
-- What operational/business outcome does it enable? It shortens plugin delivery time, reduces setup mistakes, and makes internal or partner plugin development more repeatable.
+- Calling OCI from a flow usually means custom HTTP tasks and hand-made request signing, which is fragile.
+- This plugin gives typed tasks and triggers for OCI services, and signs every request with the OCI Java SDK.
 
 ## What
 
-- Provides plugin components under `io.kestra.plugin.oci`.
-- Includes classes such as `Example`, `Trigger`.
+Provides plugin components under `io.kestra.plugin.oci`. Today it contains the **Functions** sub-plugin (`io.kestra.plugin.oci.functions`):
+
+| Component | Purpose |
+|---|---|
+| `GetFunction` | Read a function (state, memory, timeout, invoke endpoint) |
+| `ListFunctions` | List the functions of an application |
+| `InvokeFunction` | Call a function and return its response |
+| `CreateFunction` | Register a container image as a function |
+| `DeleteFunction` | Delete a function |
+| `FunctionInvocationTrigger` | Invoke a function on an interval and start an execution with the response |
+
+## Usage
+
+Pick how to authenticate with `authType` (default `API_KEY`):
+
+| `authType` | What it uses |
+|---|---|
+| `API_KEY` | `region`, `tenancyOcid`, `userId`, `fingerprint`, `privateKey` (and `passphrase`) |
+| `CONFIG_FILE` | An OCI config file (`configFile`, default `~/.oci/config`) and `profile` (default `DEFAULT`) |
+| `INSTANCE_PRINCIPAL` | The identity of the OCI compute instance Kestra runs on |
+| `RESOURCE_PRINCIPAL` | The identity of the OCI resource Kestra runs in, for example a function |
+
+```yaml
+id: invoke_oci_function
+namespace: company.platform
+
+tasks:
+  - id: invoke
+    type: io.kestra.plugin.oci.functions.InvokeFunction
+    region: eu-frankfurt-1
+    tenancyOcid: "{{ secret('OCI_TENANCY_OCID') }}"
+    userId: "{{ secret('OCI_USER_OCID') }}"
+    fingerprint: "{{ secret('OCI_FINGERPRINT') }}"
+    privateKey: "{{ secret('OCI_PRIVATE_KEY') }}"
+    functionId: "{{ secret('OCI_FUNCTION_OCID') }}"
+    body:
+      recordId: 42
+
+  - id: log_response
+    type: io.kestra.plugin.core.log.Log
+    message: "Function response: {{ outputs.invoke.body }}"
+```
+
+`InvokeFunction` only needs the function OCID: it looks up the function's invoke endpoint itself. The identity you authenticate with needs
+IAM permissions on the function; see [the Functions documentation](src/main/resources/doc/io.kestra.plugin.oci.functions.md).
+
+## Building and testing
+
+Use JDK 21.
+
+```bash
+./gradlew build
+```
+
+The unit tests run offline against a fake SDK client. `FunctionsIntegrationTest` calls a real OCI tenancy and is **skipped** unless these
+environment variables are set:
+
+| Variable | Needed for |
+|---|---|
+| `OCI_REGION`, `OCI_TENANCY_OCID`, `OCI_USER_OCID`, `OCI_FINGERPRINT`, `OCI_PRIVATE_KEY` | an API signing key (the key's PEM text) |
+| `OCI_FUNCTION_OCID` | an `ACTIVE` function to get, list and invoke (it should accept a JSON body) |
+| `OCI_APP_OCID` | the application that function belongs to |
+| `OCI_FUNCTION_IMAGE` | optional: an image in the OCI Registry, to also test create and delete (it creates a function named `kestra-it-...` and deletes it) |
+
+```bash
+export OCI_REGION=eu-frankfurt-1 OCI_TENANCY_OCID=... OCI_USER_OCID=... OCI_FINGERPRINT=... \
+       OCI_FUNCTION_OCID=... OCI_APP_OCID=...
+export OCI_PRIVATE_KEY="$(cat ~/.oci/oci_api_key.pem)"
+./gradlew test --tests '*FunctionsIntegrationTest'
+```
 
 ## Running Kestra locally with this plugin
 

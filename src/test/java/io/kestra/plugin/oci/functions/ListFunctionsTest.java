@@ -51,7 +51,7 @@ class ListFunctionsTest {
 
         ListFunctions.Output output = task.run(runContextFactory.of());
 
-        assertThat(output.getSize(), is(3));
+        assertThat(output.getCount(), is(3));
         assertThat(output.getFunctions().get(0).getDisplayName(), is("fn-1"));
         assertThat(output.getFunctions().get(2).getDisplayName(), is("fn-3"));
         assertThat(output.getFunctions().get(0).getLifecycleState(), is("ACTIVE"));
@@ -81,7 +81,7 @@ class ListFunctionsTest {
 
         ListFunctions.Output output = task.run(runContextFactory.of());
 
-        assertThat(output.getSize(), is(1));
+        assertThat(output.getCount(), is(1));
         assertThat(task.requests.size(), is(1));
     }
 

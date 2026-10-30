@@ -1,16 +1,26 @@
-This is the Kestra plugin template. Use it as a starting point for building a new plugin.
+Orchestrate Oracle Cloud Infrastructure (OCI) from Kestra flows.
 
-## What this template ships
+## Authentication
 
-- `Example` is a sample `RunnableTask` that reverses an input string.
-- `Trigger` is a sample polling trigger that fires an execution at random.
+Every task and trigger of this plugin signs its requests with the OCI SDK. Choose how with `authType`:
 
-## How to build your plugin
+- `API_KEY` (default): give `region`, `tenancyOcid`, `userId`, `fingerprint` and `privateKey` (and `passphrase` if the key is encrypted). Store them as Kestra secrets.
+- `CONFIG_FILE`: read an OCI config file (`configFile`, default `~/.oci/config`) and a `profile` (default `DEFAULT`). The file must exist on the machine that runs the task.
+- `INSTANCE_PRINCIPAL`: use the identity of the OCI compute instance Kestra runs on. No other property is needed.
+- `RESOURCE_PRINCIPAL`: use the identity of the OCI resource Kestra runs in, such as a function. No other property is needed.
 
-1. Rename the package `io.kestra.plugin.oci` to your own, for example `io.kestra.plugin.myservice`.
-2. Update `group`, `name`, `title`, and `description` in `src/main/resources/metadata/index.yaml`.
-3. Replace `src/main/resources/icons/plugin-icon.svg` with your service's icon.
-4. Replace the `Example` and `Trigger` classes with your real tasks and triggers.
-5. Replace this how-to with documentation for your plugin.
+```yaml
+tasks:
+  - id: get
+    type: io.kestra.plugin.oci.functions.GetFunction
+    region: eu-frankfurt-1
+    tenancyOcid: "{{ secret('OCI_TENANCY_OCID') }}"
+    userId: "{{ secret('OCI_USER_OCID') }}"
+    fingerprint: "{{ secret('OCI_FINGERPRINT') }}"
+    privateKey: "{{ secret('OCI_PRIVATE_KEY') }}"
+    functionId: "{{ secret('OCI_FUNCTION_OCID') }}"
+```
 
-Run `./gradlew lintPluginDocs` before pushing to validate the plugin documentation.
+## Sub-plugins
+
+- **Functions** (`io.kestra.plugin.oci.functions`): get, list, invoke, create and delete OCI Functions, and start executions from the response of a function.
