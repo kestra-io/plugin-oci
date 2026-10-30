@@ -23,7 +23,7 @@ public abstract class AbstractOciTask extends Task implements OciConnectionInter
 
     @Schema(
         title = "OCI region identifier",
-        description = "For example `eu-frankfurt-1` or `us-ashburn-1`."
+        description = "For example `eu-frankfurt-1` or `us-ashburn-1`. Required for the `API_KEY` authentication type. With `CONFIG_FILE`, the region of the config file profile is used and this property is not."
     )
     @PluginProperty(group = "connection")
     protected Property<String> region;
@@ -46,17 +46,20 @@ public abstract class AbstractOciTask extends Task implements OciConnectionInter
     @PluginProperty(group = "connection", secret = true)
     protected Property<String> privateKey;
 
-    @Schema(title = "Passphrase of the private key", description = "Only needed if the private key is encrypted.")
+    @Schema(title = "Passphrase of the private key", description = "Only needed if the private key is encrypted. Used by the `API_KEY` authentication type; with `CONFIG_FILE`, set `pass_phrase` in the config file instead.")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @PluginProperty(group = "advanced", secret = true)
     protected Property<String> passphrase;
 
-    @Schema(title = "Path to the OCI config file", description = "For the `CONFIG_FILE` authentication type.")
+    @Schema(
+        title = "Path to the OCI config file",
+        description = "For the `CONFIG_FILE` authentication type. Defaults to the file named by the `OCI_CONFIG_FILE` environment variable, then `~/.oci/config`. The file is read on the machine that runs the task."
+    )
     @PluginProperty(group = "advanced")
     protected Property<String> configFile;
 
-    @Schema(title = "Profile name in the OCI config file", description = "For the `CONFIG_FILE` authentication type.")
+    @Schema(title = "Profile name in the OCI config file", description = "For the `CONFIG_FILE` authentication type. Defaults to `DEFAULT`.")
     @PluginProperty(group = "advanced")
     protected Property<String> profile;
 }

@@ -1,19 +1,24 @@
 package io.kestra.plugin.oci;
 
+import com.oracle.bmc.ConfigFileReader;
 import com.oracle.bmc.Region;
 import com.oracle.bmc.auth.BasicAuthenticationDetailsProvider;
+import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.SimpleAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.StringPrivateKeySupplier;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
  * Builds the OCI SDK authentication provider that signs every request, from the connection properties of a task or trigger.
  */
 public final class OciAuth {
+    private static final String DEFAULT_PROFILE = "DEFAULT";
+
     private OciAuth() {
     }
 
@@ -22,8 +27,9 @@ public final class OciAuth {
 
         return switch (authType) {
             case API_KEY -> apiKey(runContext, connection);
-            case CONFIG_FILE, INSTANCE_PRINCIPAL, RESOURCE_PRINCIPAL ->
-                throw new UnsupportedOperationException("The '" + authType + "' authentication type is not implemented yet, use 'API_KEY'");
+            case CONFIG_FILE -> configFile(runContext, connection);
+            case INSTANCE_PRINCIPAL, RESOURCE_PRINCIPAL ->
+                throw new UnsupportedOperationException("The '" + authType + "' authentication type is not implemented yet, use 'API_KEY' or 'CONFIG_FILE'");
         };
     }
 
@@ -45,6 +51,25 @@ public final class OciAuth {
         passphrase.ifPresent(p -> builder.passphraseCharacters(p.toCharArray()));
 
         return builder.build();
+    }
+
+    private static ConfigFileAuthenticationDetailsProvider configFile(RunContext runContext, OciConnectionInterface connection) throws IllegalVariableEvaluationException {
+        Optional<String> path = runContext.render(connection.getConfigFile()).as(String.class).filter(value -> !value.isBlank());
+        String profile = runContext.render(connection.getProfile()).as(String.class).filter(value -> !value.isBlank()).orElse(DEFAULT_PROFILE);
+
+        try {
+            // without a path, the SDK uses $OCI_CONFIG_FILE, then ~/.oci/config
+            ConfigFileReader.ConfigFile config = path.isPresent()
+                ? ConfigFileReader.parse(path.get(), profile)
+                : ConfigFileReader.parseDefault(profile);
+
+            return new ConfigFileAuthenticationDetailsProvider(config);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(
+                "Unable to read profile '" + profile + "' of the OCI config file" + path.map(p -> " '" + p + "'").orElse("") + ": " + e.getMessage(),
+                e
+            );
+        }
     }
 
     private static String required(RunContext runContext, Property<String> property, String name) throws IllegalVariableEvaluationException {
