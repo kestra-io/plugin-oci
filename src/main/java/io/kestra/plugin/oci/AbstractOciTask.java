@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 public abstract class AbstractOciTask extends Task implements OciConnectionInterface {
     @Schema(
         title = "Authentication type",
-        description = "How to authenticate to OCI. `API_KEY` signs requests with the OCI API signing key given in this task's properties."
+        description = "How to authenticate to OCI. `API_KEY` signs requests with the OCI API signing key given in this task's properties. `CONFIG_FILE` reads an OCI config file. `INSTANCE_PRINCIPAL` uses the identity of the OCI compute instance Kestra runs on, and `RESOURCE_PRINCIPAL` that of the OCI resource (for example a function) it runs in; both need no other property, and the region is detected."
     )
     @Builder.Default
     @PluginProperty(group = "connection")

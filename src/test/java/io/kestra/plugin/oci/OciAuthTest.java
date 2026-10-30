@@ -105,16 +105,15 @@ public class OciAuthTest {
     }
 
     @Test
-    void notImplementedTypesFailInsteadOfFallingBack() {
-        for (OciAuthType type : new OciAuthType[]{OciAuthType.INSTANCE_PRINCIPAL, OciAuthType.RESOURCE_PRINCIPAL}) {
-            TestTask task = validTask()
-                .authType(Property.ofValue(type))
-                .build();
+    void resourcePrincipalOutsideOciFails() {
+        // valid API key properties are given on purpose: they must not make it fall back to API_KEY
+        TestTask task = validTask()
+            .authType(Property.ofValue(OciAuthType.RESOURCE_PRINCIPAL))
+            .build();
 
-            UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> OciAuth.provider(runContextFactory.of(), task));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> OciAuth.provider(runContextFactory.of(), task));
 
-            assertThat(exception.getMessage(), containsString(type.name()));
-        }
+        assertThat(exception.getMessage(), containsString("OCI_RESOURCE_PRINCIPAL_VERSION"));
     }
 
     @Test

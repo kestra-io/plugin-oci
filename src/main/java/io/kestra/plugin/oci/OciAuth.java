@@ -1,9 +1,10 @@
 package io.kestra.plugin.oci;
 
-import com.oracle.bmc.ConfigFileReader;
 import com.oracle.bmc.Region;
 import com.oracle.bmc.auth.BasicAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider;
+import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
+import com.oracle.bmc.auth.ResourcePrincipalAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.SimpleAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.StringPrivateKeySupplier;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -28,8 +29,10 @@ public final class OciAuth {
         return switch (authType) {
             case API_KEY -> apiKey(runContext, connection);
             case CONFIG_FILE -> configFile(runContext, connection);
-            case INSTANCE_PRINCIPAL, RESOURCE_PRINCIPAL ->
-                throw new UnsupportedOperationException("The '" + authType + "' authentication type is not implemented yet, use 'API_KEY' or 'CONFIG_FILE'");
+            // the region is detected from the instance metadata service
+            case INSTANCE_PRINCIPAL -> InstancePrincipalsAuthenticationDetailsProvider.builder().build();
+            // everything is read from the OCI_RESOURCE_PRINCIPAL_* environment variables set by OCI
+            case RESOURCE_PRINCIPAL -> ResourcePrincipalAuthenticationDetailsProvider.builder().build();
         };
     }
 
@@ -59,11 +62,9 @@ public final class OciAuth {
 
         try {
             // without a path, the SDK uses $OCI_CONFIG_FILE, then ~/.oci/config
-            ConfigFileReader.ConfigFile config = path.isPresent()
-                ? ConfigFileReader.parse(path.get(), profile)
-                : ConfigFileReader.parseDefault(profile);
-
-            return new ConfigFileAuthenticationDetailsProvider(config);
+            return path.isPresent()
+                ? new ConfigFileAuthenticationDetailsProvider(path.get(), profile)
+                : new ConfigFileAuthenticationDetailsProvider(profile);
         } catch (IOException e) {
             throw new IllegalArgumentException(
                 "Unable to read profile '" + profile + "' of the OCI config file" + path.map(p -> " '" + p + "'").orElse("") + ": " + e.getMessage(),
